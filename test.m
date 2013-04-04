@@ -9,7 +9,8 @@ function [ fea_vector ] = test(img_vector, c, patch_size)
 
     parfor yidx = 1:ceil(y_max/patch_size),
     	y = (yidx -1 )*patch_size + 1;
-    	fea_vector(yidx, :, :) = gen_abs_row_patches(img_vector, c, y, patch_size);
+    	gen_abs_row_patches(img_vector, c, y, patch_size);
+    	% fea_vector(yidx, :, :) = gen_abs_row_patches(img_vector, c, y, patch_size);
     end
 
     toc(start)
