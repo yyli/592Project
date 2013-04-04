@@ -1,4 +1,4 @@
-function [ c ] = gen_abs_columns(img_vector, patch_size)
+function [ c ] = gen_abs_columns(img_vector)
 x_max = size(img_vector, 2);
 y_max = size(img_vector, 1);
 assert(size(img_vector, 3) == 17);
