@@ -1,4 +1,4 @@
-function [ fea_vector ] = gen_abs_row_patches(img_vector, c, y, patch_size)
+function [] = gen_abs_row_patches(img_vector, c, y, patch_size, name)
     patch_size_init = patch_size;
     x_max = size(img_vector, 2);
     y_max = size(img_vector, 1);
@@ -41,6 +41,7 @@ function [ fea_vector ] = gen_abs_row_patches(img_vector, c, y, patch_size)
         fea_vector(xidx, 18*34+1:19*34) = sum(c(4, xlower:xupper, :));
         xidx = xidx + 1;
     end
+    save(strcat(name, '.mat'), 'fea_vector');
 end
 
 function [ ret_sum ] = sum_filter( img_vector, x, y, patch_size)
