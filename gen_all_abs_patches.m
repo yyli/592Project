@@ -7,13 +7,12 @@ y_max = size(img_vector, 1);
 assert(size(img_vector, 3) == 17);
 
 c = zeros(4, x_max, 34);
-fea_vector = zeros(19, 34);
 
 y_diff = ceil(y_max/4);
 for x = 1:x_max, 
 	for y = 1:y_diff:y_max,
 		xlower = x;
-		xupper = x + patch_size - 1;
+		xupper = x;
 		if (xupper > x_max)
 			xupper = x_max;
 		end
@@ -32,26 +31,27 @@ end
 for x = 1:patch_size:x_max, 
 	midstart = tic;
 	for y = 1:patch_size:y_max,
+		fea_vector = zeros(ceil(y_max/patch_size), ceil(x_max/patch_size), 19*34);
 		patch_size_temp = patch_size;
-	    fea_vector(1, :) = sum_filter( img_vector, x, y, patch_size_temp); % center
-	    fea_vector(2, :) = sum_filter( img_vector, x, y - patch_size_temp, patch_size_temp); % top
-	    fea_vector(3, :) = sum_filter( img_vector, x, y + patch_size_temp, patch_size_temp); % bottom
-	    fea_vector(4, :) = sum_filter( img_vector, x - patch_size_temp, y, patch_size_temp); % left (sub)
-	    fea_vector(5, :) = sum_filter( img_vector, x + patch_size_temp, y, patch_size_temp); % right (add)
+	    fea_vector(0*34+1:1*34) = sum_filter( img_vector, x, y, patch_size_temp); % center
+	    fea_vector(1*34+1:2*34) = sum_filter( img_vector, x, y - patch_size_temp, patch_size_temp); % top
+	    fea_vector(2*34+1:3*34) = sum_filter( img_vector, x, y + patch_size_temp, patch_size_temp); % bottom
+	    fea_vector(3*34+1:4*34) = sum_filter( img_vector, x - patch_size_temp, y, patch_size_temp); % left (sub)
+	    fea_vector(4*34+1:5*34) = sum_filter( img_vector, x + patch_size_temp, y, patch_size_temp); % right (add)
 
 	    patch_size_temp = patch_size_init * 3;
-	    fea_vector(6, :) = sum_filter( img_vector, x, y, patch_size_temp); % center
-	    fea_vector(7, :) = sum_filter( img_vector, x, y - patch_size_temp, patch_size_temp); % top
-	    fea_vector(8, :) = sum_filter( img_vector, x, y + patch_size_temp, patch_size_temp); % bottom
-	    fea_vector(9, :) = sum_filter( img_vector, x - patch_size_temp, y, patch_size_temp); % left (sub)
-	    fea_vector(10, :) = sum_filter( img_vector, x + patch_size_temp, y, patch_size_temp); % right (add)
+	    fea_vector(5*34+1:6*34) = sum_filter( img_vector, x, y, patch_size_temp); % center
+	    fea_vector(6*34+1:7*34) = sum_filter( img_vector, x, y - patch_size_temp, patch_size_temp); % top
+	    fea_vector(7*34+1:8*34) = sum_filter( img_vector, x, y + patch_size_temp, patch_size_temp); % bottom
+	    fea_vector(8*34+1:9*34) = sum_filter( img_vector, x - patch_size_temp, y, patch_size_temp); % left (sub)
+	    fea_vector(9*34+1:10*34) = sum_filter( img_vector, x + patch_size_temp, y, patch_size_temp); % right (add)
 
 	    patch_size_temp = patch_size_init * 9;
-	    fea_vector(11, :) = sum_filter( img_vector, x, y, patch_size_temp); % center
-	    fea_vector(12, :) = sum_filter( img_vector, x, y - patch_size_temp, patch_size_temp); % top
-	    fea_vector(13, :) = sum_filter( img_vector, x, y + patch_size_temp, patch_size_temp); % bottom
-	    fea_vector(14, :) = sum_filter( img_vector, x - patch_size_temp, y, patch_size_temp); % left (sub)
-	    fea_vector(15, :) = sum_filter( img_vector, x + patch_size_temp, y, patch_size_temp); % right (add)
+	    fea_vector(10*34+1:11*34) = sum_filter( img_vector, x, y, patch_size_temp); % center
+	    fea_vector(11*34+1:12*34) = sum_filter( img_vector, x, y - patch_size_temp, patch_size_temp); % top
+	    fea_vector(12*34+1:13*34) = sum_filter( img_vector, x, y + patch_size_temp, patch_size_temp); % bottom
+	    fea_vector(13*34+1:14*34) = sum_filter( img_vector, x - patch_size_temp, y, patch_size_temp); % left (sub)
+	    fea_vector(14*34+1:15*34) = sum_filter( img_vector, x + patch_size_temp, y, patch_size_temp); % right (add)
 
 	    xlower = x;
 	    xupper = x + patch_size_temp;
@@ -59,10 +59,10 @@ for x = 1:patch_size:x_max,
 	    	xupper = x_max;
 	    end
 
-	    fea_vector(16, :) = sum(c(1, xlower:xupper, :));
-	    fea_vector(17, :) = sum(c(2, xlower:xupper, :));
-	    fea_vector(18, :) = sum(c(3, xlower:xupper, :));
-	    fea_vector(19, :) = sum(c(4, xlower:xupper, :));
+	    fea_vector(15*34+1:16*34) = sum(c(1, xlower:xupper, :));
+	    fea_vector(16*34+1:17*34) = sum(c(2, xlower:xupper, :));
+	    fea_vector(17*34+1:18*34) = sum(c(3, xlower:xupper, :));
+	    fea_vector(18*34+1:19*34) = sum(c(4, xlower:xupper, :));
  	end
     time = toc(midstart);
     fprintf('%8.3f%%, %10.5f, %10.5f\n', x/x_max*100, time, toc(start));
