@@ -1,26 +1,18 @@
-function [ depth ] = test()
-	tic
-	patch_size = 8;
+function [ fea_vector ] = test(img_vector, c, patch_size)
+    start = tic;
+    patch_size_init = patch_size;
+    x_max = size(img_vector, 2);
+    y_max = size(img_vector, 1);
+    assert(size(img_vector, 3) == 17);
 
-	img = imread('traintest1.jpg');
-	rows = size(img, 2);
-	cols = size(img, 1);
-	load('traintest1.mat');
-	true_d = Position3DGrid(:,:,4);
+    fea_vector = zeros(ceil(y_max/patch_size), ceil(x_max/patch_size), 19*34);
 
-	clear Position3DGrid;
+    parfor yidx = 1:ceil(y_max/patch_size),
+    	y = (yidx -1 )*patch_size + 1;
+    	fea_vector(yidx, :, :) = gen_abs_row_patches(img_vector, c, y, patch_size);
+    end
 
-	abs_vector = generate_filter_output(img);
-	depth = abs_vector;
-
-	for y = 1:patch_size:cols - patch_size,
-		tic
-		for x = 1:patch_size:rows - patch_size, 
-			feature_vector = gen_abs_vector_patch(abs_vector, x, y, patch_size);
-		end
-		toc
-	end
-	toc
+    toc(start)
 	% max_y = 2272;
 	% max_x = 1704;
 	% norm_x = 305;
