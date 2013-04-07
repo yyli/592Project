@@ -30,7 +30,7 @@ function [ fea_vector ] = gen_all_abs_patches(p, c, original_patch_size)
             fea_vector(y, x, 18*34+1:19*34) = sum_col(c, x, 4, original_patch_size);
         end
     end
-    toc(start)
+    % toc(start);
 end
 
 function [ fixed ] = fix_to_range(num, min, max)
