@@ -23,7 +23,7 @@ function [ theta ] = test()
 		toc
 		theta(:, r) = train_depth(feature_row, depth_row);
 		midend = toc;
-		fprintf('mean diff: %12.9f time: %10.6f\n',mean(abs(feature_row*theta(:, r) - depth_row)), midend)
+		fprintf('mean diff: %12.9f time: %10.6f percent: %8.4f\n',mean(abs(feature_row*theta(:, r) - depth_row)), midend, r/max_rows*100)
 	end
 	toc(start)
 end

@@ -167,3 +167,7 @@ Dataset1_Depths
 Dataset1_Images
 Train400Depth
 Train400Img
+ParsedDepth
+ParsedImg
+*.mat
+*.jpg
