@@ -7,7 +7,7 @@ function [ theta ] = train_depth(features, depth)
 	% size(depth_row);
 
 	% theta3 = pinv(feature_row) * depth_row;
-	theta = robustfit(feature, depth, 'huber', 1.345, 'off');
+	theta = robustfit(features, depth, 'huber', 1.345, 'off');
 	% theta2 = regress(depth_row, feature_row);
 	% [feature_row*theta feature_row*theta2 feature_row*theta3 depth_row];
 end
