@@ -169,5 +169,4 @@ Train400Depth
 Train400Img
 ParsedDepth
 ParsedImg
-*.mat
 *.jpg
