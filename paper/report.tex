@@ -8,7 +8,7 @@
 \usepackage[cmex10]{amsmath}
 \interdisplaylinepenalty=2500
 
-\title{Project Status Report: 3D Depth Reconstruction with Monocular Vision using Supervised Learning}
+\title{EECS 592 Final Progject: 3D Depth Reconstruction with Monocular Vision using Supervised Learning}
 \author{Yiying Li}
 \date{\today}
 
@@ -128,9 +128,121 @@ Once I started to do feature extraction I ran into many problems with the speed 
 
 Running regression on the model for learning posed another interesting yet annoying and non-technical problem. The resulting features data from a single 1704x2272 images was around 280MB of data. If we wanted to train on 400 images, this would have required 112GB of RAM, which is infeasible. Instead we had to read from disk for every row that we wanted to run regression on. As expected loading a 280MB data from disk just to extract a row of features is extremely slow, so slow that it would have taken over a full year to do this for for each possible row (284). After much thought the rows of features are extracted independently and precomputed before training to reduce the loading time of each row feature set. This reduced the loading time substantially, however regression time can not be lowered from 400+s for each row.
 
+\subsection{Insurmountable Difficulties}
+The model is easy to train in both the Gaussian and the Laplacian case. The Laplacian and the Gaussian are both trained using linear regression. The problem comes from the variance terms $\sigma^2_{1r}$, $\sigma^2_{2rs}$ and their respective Laplacian equivalents. The problem comes is that these terms are not trained them selves but are based on another term $u$. The author explains that $\sigma^2_{1r}$, $\sigma^2_{2rs}$ are trained on the expected value of their respective numerator or data, however it makes no explanation on whether the variances themselves are calcuated then the term $u$ is inferred from the equations stated in Section V. It is also confusing that they author states they use a quadratic program to solve the $u$ term for the Gaussian and a linear program to solve for the Laplacian. This is a problem because if we were to use the imperial variance then the equation for the Gaussian doesn't have a quadratic term therefore doesn't require a quadratic program. I couldn't reach the author through email to get a clarification for this, however it turned out not to matter due to the next problem.
+
+The most impossible problem was in the inference of the model. Since the model requires the difference of depth from surround patches on multiple scales, inference is extremely interesting as there is multiple depths we much solve from in the model equation. Fortunately the author gives the inference method in the appendix. The equation is converted into a standard multivariate Gaussian form (Eq. \ref{eq:stdgaussian})
+
+\begin{eqnarray}
+\label{eq:stdgaussian}
+	P_G = \frac{1}{Z_G} \exp{\left(-\frac{1}{2}(d-X_a\theta_r)^T\Sigma_a^{-1}(d-X_a\theta_r)\right)} \\
+	X_a = (\Sigma_1^{-1}+Q^T\Sigma_2^{-1}Q)^{-1}\Sigma_1^{-1}X \nonumber
+\end{eqnarray}
+
+Where $\Sigma_1$ is the matrix of $\sigma^2_1$ and $\Sigma_2$ is the matrix of $\sigma^2_2$. Not only do they not tell us of what form these matrices are (diagonal or just vertical), we can make assumptions based on the equation for try and figure this our. The big problem comes from the term $Q$, the authors describe this term as the matrix such that $Qd$ gives the differences of the depths of neighboring patches. To this day I have not figured out what this even means, or how it could be calculated. This prevents us from using $\sigma^2_2$ in any way during inference. This isn't just a problem for the Gaussian model as the Laplacian model uses the same term. Further more the Laplacian inference the author provides does include the matrix dimensions of the all the terms allow us to easily figure out how they are form. Unfortunately when you look at the math, the matrix math is impossible as there are matrix multiplications that are impossible as the dimensions don't match. There are also no clear types in which we can make all the math work out.
+
+Since we can't use $\sigma^2_2$ variance term, the first variance term $\sigma^2_1$ doesn't have any effect on the inference as it is just a scale on the input and it just gets divided out when we solve for a closed form of the equation. The same problem occurs in the linear program inference of the Laplacian model. Without the $\lambda_2$ the linear program is resolved to the same inference as the Gaussian allowing us just to drop these variance terms completely from the inference methods. Since the Laplacian is approximated by the Gaussian in learning and reduces the Gaussian inference, these two models are now equivalent. The lack of the $\sigma^2_2$ also renders the relative features useless as they were only used to calculate this variance term. Unfortunately the author hasn't replied to many of my emails asking how this math should work out and what $Q$ actually is and how it is generated.
+
+The combination of stereo cues had the same problem. The author added certain terms to the model, however didn't show in any supporting material on how to do inference on this new model. The model isn't one with a standard solution or some that I could find. The stereo cues model is missing from this replication due to these problems. The author seems to add it in as only a proof of concept that this MRF model can be combined with stereo to make it better. The author just uses standard stereo rectification therefore missing out on quite a few optimizations that could make the overall result even better. That is one of the main reason why I think that the author presents this stereo cues model just as a proof that this MRF model can be used to augment other depth generation methods.
+
 \section{Replication Results}
+Even with all the problems with the models, some simple results were generated on a very simplified model. The patch size was 8x8 to try and match the resolution of the ground truth depth maps. The testing set is comprised of 400 training pairs (image, depth map), and 134 testing pairs. Each of the sets are of various different outdoor environments, such as trees, building, courtyards, etc\dots~It's hard to find a numerical way to measure how well the model does as the mean difference in the depth doesn't show how bad certain areas did and the min and max don't tell us how much of the spread is there. The author only tells us the mean of the log 10 error in Table \ref{tb:mean}.
+
+\begin{table}[!t]
+	\renewcommand{\arraystretch}{1.3}
+	\caption{A Comparison of Mean Error}
+	\label{tb:mean}
+	\centering
+	\begin{tabular}{c|c|c|c}
+	\hline
+	\bfseries  & Original & Least Squares & Robust Regression \\
+	\hline\hline
+	Log10 & 0.133 & 0.1963 & 0.150\\
+	\hline
+	Real (m)  & unknown & 11.647 & 8.377\\ 
+	\hline
+	\end{tabular}
+\end{table}
+
+\begin{figure}
+\label{fig:histogramall10}
+\includegraphics[width=\linewidth]{histogramall10.eps}
+\caption{The x axis is the depth error (truth - generated), the y axis is the percent of the patches that fall into this depth error. This is from all the patches of the 134 testing images. This includes all the bins.}
+\end{figure}
+
+\begin{figure}
+\label{fig:histogramcut}
+\includegraphics[width=\linewidth]{histogramcut.eps}
+\caption{The x axis is the depth error (truth - generated), the y axis is the percent of the patches that fall into this depth error. This is from all the patches of the 134 testing images. This only include the range of bins that from -20 to 20 meters}
+\end{figure}
+
+The mean log10 error is very close between the Original and the robust regression of my replication. The difference is to be expected as I'm missing the smoothing terms that come from the relative feature patches, but we can safely say that even without the relative features and smoothing terms that the model still does very well. The least square result is provided to show how much worse it is when we don't remove outliars when we do regression. It actually is still pretty good and provides a 20 times speed up over robust regression. It is interesting to point out that the mean here is only high because there are small numbers of really high differences. If we cut 10\% off the highest difference patches we get a mean error of only 4.072 meters. The histogram of the difference between the real ground truth depth and the generated depth is show in Figure \ref{fig:histogramall10}. This data is generated over 134 testing images, this way we can see what the distribution of the differences. We see that the majority of the error is around 0, but since there are certain errors that are huge, we must zoom in to the relevant areas. Figure \ref{fig:histogramcut} shows the errors that are between -20 and 20 meters. We can see from this that over 80\% of the errors are between -5 and 5 meters and around 60\% of the error is less than -2 to 2 meters. This is pretty good for certain applications such as navigating areas where you can have a huge amount of space you can work in. It is interesting to note that the huge large errors are always negative, this means that the model overestimates the depth more often than it underestimate it. This is due to the linear regression causing certain new data points to force the depth really high. An approach that might fix this is limit the model to the max depth of the laser scanner in training. This removes depths that the training data never could encounter, the point isn't to try and estimate unknown distances using known distances.
+
+\begin{figure*}
+\label{fig:comparison}
+\centering
+\hrule
+\vspace{.01in}
+{\large Comparison 1} \\
+\hrule
+\vspace{.1in}
+\includegraphics[height=2in]{compare1.png} \\
+\includegraphics[height=2in]{compare1.jpg} \\
+\hrule
+\vspace{.01in}
+{\large Comparison 2} \\
+\hrule
+\vspace{.1in}
+\includegraphics[height=2in]{compare2.png} \\
+\includegraphics[height=2in]{compare2.jpg} \\
+\caption{Comparison between the original result and reproduced result. The top 3 images are the original and the bottom 4 are the reproduction. The colors are inverted from the reproduction and original. The ``Abs Diff'' image is of a different scale than the rest of the images, it's from 0 to the max abs difference in this image.}
+\end{figure*}
+
+Even though I used the same testing set as the author, not all of the images they have in their results were in the dataset. Out of the four results that they showed I only found two of them in the dataset I used for training and testing. The comparison results are in Figure \ref{fig:comparison}. All the colors in reversed, this is due to the different scaling that MATLAB uses. 
+
+It is clear that there are certain problems when the smoothing term is removed from the model. If we look in Comparison 1 of Figure \ref{fig:comparison}, at the region that really far away the original results shows the entire area as an uniform far away area, while my result shows that there is a patch in the middle that is even further away than the rest of the sky. This is because in this patch there exists certain cues that cause a further depth, without smoothing information from the surrounding area has a lower effect on the area allowing the weird depth to show up in the results. Notice that both the original and replicated result can't differentiate the tree branches depth from the building depth. I theorize that this is due to the fact that this type of situation doesn't happen in the training set for these feature sets. If we look at Comparison 2 of Figure \ref{fig:comparison}, we see that it does indeed figure out that the bush on the ground is closer. This could just be coincidence as we might have just learned that the closer to the bottom the area is the more likely it is closer. In Comparison 2 we also can note that it does in fact get the stalks of the trees pretty distinctively, and the only huge problem in the difference is the depth of the ``infinite'' area, which usually isn't of high concern.
+
+\begin{figure*}
+\label{fig:good}
+\centering
+\includegraphics[width=\linewidth]{good1.jpg} \\
+\includegraphics[width=\linewidth]{good2.jpg} \\
+\includegraphics[width=\linewidth]{good3.jpg} \\
+\includegraphics[width=\linewidth]{good4.jpg} \\
+\caption{Four extremely good results. The ``Abs Diff'' image is of a different scale than the rest of the images, it's from 0 to the max abs difference in this image.}
+\end{figure*}
+
+Figure \ref{fig:good} shows four good results that I extracted from all the results. The first one of the tree is interesting however it gets the stalk from bottom to top. The edge of the tree has the most error, which is expected as this model can't handle instant changes in depth around specific patches. The second image is a good indicator that it can find thin objects such as extremely thing tree stalks, I would argue that this generated depth is almost better than the ground truth from a qualitative point of view. You an clearly see that there are sky bleeding through certain parts of the top of the trees, the laser scanner fails to pick this up as well as this model does. From the four images here we can clearly see the model find the sky pretty consistently, and the ``vanishing poinf'' can be clearly seen with the generated depth map.
+
+\begin{figure*}
+\label{fig:bad}
+\centering
+\includegraphics[width=\linewidth]{bad1.jpg} \\
+\includegraphics[width=\linewidth]{bad2.jpg} \\
+\includegraphics[width=\linewidth]{bad4.jpg} \\
+\includegraphics[width=\linewidth]{bad3.jpg} \\
+\caption{Four extremely bad results. The ``Abs Diff'' image is of a different scale than the rest of the images, it's from 0 to the max abs difference in this image.}
+\end{figure*}
+
+Figure \ref{fig:bad} shows four bad results from the test set. The tree stalk in similar to the one in the Figure \ref{fig:good}, however here it fails to show that the whole stalk is of the same depth, instead it follows the expected result of bottom is closer and top and further away. It completely fails on the two images of the building, and generates a featureless depth map, where the majority of the depth is the same, even though the original images have varying depth in different areas. The last image shows that if there are similar colors or textures for thin objects it will treat as part of the overall larger background, as we lose the stalk of the tree in this image. As I looked at the results I think there are distinct problems that this model cannot handle.
+
+As this is a unsupervised method, I argue that a image with a swimming pool with the same color as the sky will net the result of the swimming pool being the same distance as the sky. This is because something with similar color to the sky doesn't really exist at all in the training set. If we flip the 3rd image of Figure \ref{fig:good}, we get Figure \ref{fig:flip}. We can tell that this is not a good result at all. This shows that the model is completely reliant on the fact in all of the training images what is closer to the bottom is closer and what is on top is further away. The model can't handle situations that vastly differs from the training set. This might be able to be solved with more training data that cover a wide variety of different situations.
+
+\begin{figure*}
+\label{fig:flip}
+\centering
+\includegraphics[width=\linewidth]{flip.png}
+\caption{}
+\end{figure*}
+
+Some other case of the model performing bad is one extremely bright images. As there is no normalization of the intensity the model actually learns specific features that are completely based on the magnitude of the intensity channel. This causes extremely bright objects to be treated as really far away as the sky generally is extremely bright, and that is really far away. This is hard to solve as normalizing unknown scenes is a lot of guessing work. The testing data also shows that extreme close objects are not picked, I'm not sure why this is the case, as the features should be apparent in the training data, however the closer the object is to the camera, it seems more likely that it will generate bogus depth data for at least part of that object. I think a lot of this might have something to do with smoothing but also the information from a local patch doesn't propagate far enough to take advantage of a object that is spanning the whole image. The author does have a newer work that first calculate ``superpixels'' which are just a combination of pixels that are very similar, and then runs a similar MRF model on it \cite{saxenaSU}. This new work does better than the one described in this paper, however it doesn't drastically improve the result.
+
+The speed of this algorithm is not real time, and on-line training can not be added to the model. Training on 400 images takes over 30 hours, and inference takes around 60s. A portion of this can be extremely sped up by using GPUs, since extracting the features from the image is a perfect example of GPU parallel processing. The majority of the training time is the regression algorithm, however that isn't part of the inference, and the inference can also be solved on the GPU. This could potentially speed up the algorithm to real time.
 
 \section{Conclusion}
+This method does seem to offer a way to generate depth from a single still image. There are still better ways to generate depth if you are using stereo cameras or a 3d laser scanner. Moving monocular depth generation is better solved by the structure from motion problem. If depth from a single still image is absolutely needed, then this method does give a good estimate to the overall depth map of the image. It can be used to augment the problems plaguing stereo for far away depth, however even then is suffers from a similar problem, features get smaller and more sparse the further away an object is. The method is a good example of just how much information you can extract from a 1MB JPEG image (280MB of information), although how much of that is repetitive is a valid argument.
+
+Some lesson learned is that papers should provide enough information for a person to reproduce the actual result without removing terms that there wasn't enough clarification for. To include a certain term in an equation and give a one sentence unclear description, and not provide a way to calculate this term hinders the reproduction of the paper drastically. While I did get a reproduction working it was not without extreme annoyance at the lack of information about extremely important terms in equations. I also found myself seeking implementation details to actually complete the project in time, certain implementation details might be helpful to include to allow the reproduction to actually be useful. This paper was very hard to reproduce and its merits are few once my reproduction was finished.
 
 \section*{Acknowledgment}
 I would like to thank Chansoon Lee, and professor Benjamin Kuipers for helping me with the impossibly hard to understand parameters of the models described in this paper, preventing me from thinking that I was going crazy because nothing made sense.

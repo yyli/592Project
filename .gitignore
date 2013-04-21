@@ -202,3 +202,5 @@ Testresults
 *.snm
 *.fls
 *.fdb_latexmk
+*.pdf
+*.fig
