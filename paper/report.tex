@@ -226,7 +226,7 @@ Figure \ref{fig:good} shows four good results that I extracted from all the resu
 
 Figure \ref{fig:bad} shows four bad results from the test set. The tree stalk in similar to the one in the Figure \ref{fig:good}, however here it fails to show that the whole stalk is of the same depth, instead it follows the expected result of bottom is closer and top and further away. It completely fails on the two images of the building, and generates a featureless depth map, where the majority of the depth is the same, even though the original images have varying depth in different areas. The last image shows that if there are similar colors or textures for thin objects it will treat as part of the overall larger background, as we lose the stalk of the tree in this image. As I looked at the results I think there are distinct problems that this model cannot handle.
 
-As this is a unsupervised method, I argue that a image with a swimming pool with the same color as the sky will net the result of the swimming pool being the same distance as the sky. This is because something with similar color to the sky doesn't really exist at all in the training set. If we flip the 3rd image of Figure \ref{fig:good}, we get Figure \ref{fig:flip}. We can tell that this is not a good result at all. This shows that the model is completely reliant on the fact in all of the training images what is closer to the bottom is closer and what is on top is further away. The model can't handle situations that vastly differs from the training set. This might be able to be solved with more training data that cover a wide variety of different situations.
+As this is a supervised method, I argue that a image with a swimming pool with the same color as the sky will net the result of the swimming pool being the same distance as the sky. This is because something with similar color to the sky doesn't really exist at all in the training set. If we flip the 3rd image of Figure \ref{fig:good}, we get Figure \ref{fig:flip}. We can tell that this is not a good result at all. This shows that the model is completely reliant on the fact in all of the training images what is closer to the bottom is closer and what is on top is further away. The model can't handle situations that vastly differs from the training set. This might be able to be solved with more training data that cover a wide variety of different situations.
 
 \begin{figure*}
 \label{fig:flip}
@@ -248,6 +248,6 @@ Some lesson learned is that papers should provide enough information for a perso
 I would like to thank Chansoon Lee, and professor Benjamin Kuipers for helping me with the impossibly hard to understand parameters of the models described in this paper, preventing me from thinking that I was going crazy because nothing made sense.
 
 \bibliographystyle{IEEEtran}
-\bibliography{IEEEabrv, report}
+\bibliography{report}
 
 \end{document}
